@@ -56,7 +56,7 @@ const delayBetweenInstances = 10000;
 const totalAccounts = usernames.length; // 总的账号数
 const delayBetweenBatches =
   runTimeLimitMillis / Math.ceil(totalAccounts / maxConcurrentAccounts);
-
+const isLikeSpecificUser = process.env.LIKE_SPECIFIC_USER || "false";
 let bot;
 if (token && chatId) {
   bot = new TelegramBot(token);
@@ -233,10 +233,18 @@ async function launchBrowserForUser(username, password) {
     }
 
     //真正执行阅读脚本
-    const externalScriptPath = path.join(
-      dirname(fileURLToPath(import.meta.url)),
-      "index.js"
-    );
+    let externalScriptPath;
+    if (isLikeSpecificUser === "true") {
+      externalScriptPath = path.join(
+        dirname(fileURLToPath(import.meta.url)),
+        "index_likeUser.js"
+      );
+    } else {
+      externalScriptPath = path.join(
+        dirname(fileURLToPath(import.meta.url)),
+        "index.js"
+      );
+    }
     const externalScript = fs.readFileSync(externalScriptPath, "utf8");
 
     // 在每个新的文档加载时执行外部脚本
@@ -352,16 +360,23 @@ async function login(page, username, password, retryCount = 3) {
     const alertError = await page.$(".alert.alert-error");
     if (alertError) {
       const alertText = await page.evaluate((el) => el.innerText, alertError); // 使用 evaluate 获取 innerText
-      if (alertText.includes("incorrect") || alertText.includes("不正确")) {
+      if (
+        alertText.includes("incorrect") ||
+        alertText.includes("Incorrect ") ||
+        alertText.includes("不正确")
+      ) {
         throw new Error(
-          `非超时错误，请检查用户名密码是否正确，失败用户 ${username}, 密码 ${password}, 错误信息：${alertText}`
+          `非超时错误，请检查用户名密码是否正确，失败用户 ${username}, 错误信息：${alertText}`
         );
       } else {
-        console.log("非超时错误，也不是密码错误，错误信息：", alertText);
+        throw new Error(
+          `非超时错误，也不是密码错误，失败用户 ${username}，错误信息：${alertText}`
+        );
       }
     } else {
       if (retryCount > 0) {
         console.log("Retrying login...");
+        await page.reload({ waitUntil: "domcontentloaded" });
         await delayClick(2000); // 增加重试前的延迟
         return await login(page, username, password, retryCount - 1);
       } else {

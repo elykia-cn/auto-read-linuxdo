@@ -34,7 +34,13 @@ npm install
 # 自动阅读随机点赞
 node .\bypasscf.js
 # 自动点赞特定用户
-node .\bypasscf_likeUser.js
+## windows
+set LIKE_SPECIFIC_USER=true && node .\bypasscf.js
+## powershell
+$env:LIKE_SPECIFIC_USER = "true"
+node .\bypasscf.js
+## linux
+LIKE_SPECIFIC_USER=true node ./bypasscf.js
 ```
 
 #### Linux 额外安装以下包，运行命令相同
@@ -110,18 +116,6 @@ crontab -e
 2. 服务器运行时，还需要修改.env 下的 WEBSITE 变量为对应的网址（如果网址是不存在原先脚本的，需要修改 external.js 中对应的部分，重新构建镜像）
 3. 小众软件论坛只能在 Windows 下运行，所以需要使用定制版 action: [.github\workflows\windows_cron_bypassCF.yaml](https://github.com/14790897/auto-read-liunxdo/blob/main/.github/workflows/windows_cron_bypassCF.yaml)
 
-#### 其它
-
-external 是作为 puppeteer 的脚本使用的，由 index_passage_list.js 改造，主要是去除了按钮以及设置为自动阅读和自动点赞启动
-
-```sh
-   localStorage.setItem("read", "true"); // 自动滚动
-    localStorage.setItem("autoLikeEnabled", "true"); //自动点赞
-
-      // document.body.appendChild(button);
-  // document.body.appendChild(toggleAutoLikeButton);
-```
-
 #### 随笔
 
 开发中遇到的问题：
@@ -134,7 +128,7 @@ external 是作为 puppeteer 的脚本使用的，由 index_passage_list.js 改�
 
 #### 待做
 
-1. TimeoutError 时候可以捕获错误然后关掉当前浏览器重新再开一次
+1. TimeoutError 时候可以捕获错误然后关掉当前浏览器重新再开一次(已经实现刷新页面重新登录但是效果不好)
 2. 自动阅读脚本可以加一个阅读速度选项（快，慢，始终），因为有用户反应读的太快了（应该是他们屏幕太小）
 3. https://github.com/14790897/auto-read-liunxdo/issues/67
 
